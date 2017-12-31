@@ -41,4 +41,4 @@ while True:
         client.write_points(json_body)
     except Exception as e:
         logging.error(traceback.format_exc())
-    time.sleep(5)
+    time.sleep(10)
