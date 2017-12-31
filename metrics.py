@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 from isc_dhcp_leases import Lease, IscDhcpLeases
 from influxdb import InfluxDBClient
 import requests
@@ -27,11 +28,17 @@ def setup_request():
     return json_body
 
 def setup_influx():
-    client = InfluxDBClient('192.168.10.4', 8086, '', '', 'dhcpd')
-    client.create_database('dhcpd')
+    try:
+        client = InfluxDBClient('192.168.10.4', 8086, '', '', 'dhcpd')
+        client.create_database('dhcpd')
+    except Exception as e:
+        logging.error(traceback.format_exc())
     return client
 while True:
     json_body=setup_request()
     client=setup_influx()
-    client.write_points(json_body)
+    try:
+        client.write_points(json_body)
+    except Exception as e:
+        logging.error(traceback.format_exc())
     time.sleep(5)
