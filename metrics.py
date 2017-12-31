@@ -3,32 +3,35 @@ from influxdb import InfluxDBClient
 import requests
 import socket
 import datetime
+import time
 
 def setup_request():
-    time = datetime.datetime.now().isoformat()
-    leases = IscDhcpLeases('dump_dhcpd.leases')
-    leases_count = print(len(leases.get()))
+    time = datetime.datetime.utcnow().isoformat()
+    leases = IscDhcpLeases('/var/lib/dhcp/dhcpd.leases')
+    leases_count = len(leases.get_current())
     hostname = (socket.gethostname())
+    print(leases_count)
     json_body = [
     {
-    "measurement": "dhcp_leases_count",
-    "tags": {
-    "host": hostname,
-    },
-    "time": time,
-    "fields": {
-    "value": leases_count
-    }
+        "measurement": "dhcp_leases",
+        "tags": {
+            "host": hostname,
+        },
+        "time": time,
+        "fields": {
+            "value":float(leases_count)
+        }
     }
     ]
+    print(json_body)
     return json_body
 
 def setup_influx():
-    client = InfluxDBClient('192.168.10.4', 8086, '', '', '')
-    client.create_database('dhcpcd')
+    client = InfluxDBClient('192.168.10.4', 8086, '', '', 'dhcpd')
+    client.create_database('dhcpd')
     return client
-
-json_body=setup_request()
-client=setup_influx()
-client.write_points(json_body)
-exit(1)
+while True:
+    json_body=setup_request()
+    client=setup_influx()
+    client.write_points(json_body)
+    time.sleep(5)
